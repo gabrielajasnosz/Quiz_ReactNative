@@ -82,11 +82,19 @@ const STORAGE_KEY = '@save_rule_status';
 const Drawer = createDrawerNavigator();
 
 class App extends Component {
+  // async componentDidMount() {
+  //   const quiz = new QuizService();
+  //   this.setState({
+  //     testsData: await quiz.getTests(),
+  //   });
+  //
+  // }
+
   async componentDidMount() {
-    const quiz = new QuizService();
-    this.setState({
-      testsData: await quiz.getTests(),
-    })
+    // const quiz = new QuizService();
+    // this.props.navigation.navigate('Home', {
+    //   tests: await quiz.getTests(),
+    // });
     SplashScreen.hide();
   }
 

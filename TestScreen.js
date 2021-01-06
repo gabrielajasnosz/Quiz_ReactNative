@@ -11,6 +11,7 @@ import Headline from './Headline';
 import QuizService from './QuizService';
 import Button from './Button';
 
+const _ = require('lodash');
 class TestScreen extends Component {
   constructor() {
     super();
@@ -36,7 +37,7 @@ class TestScreen extends Component {
     const changeQuestion = (id) => {
       if (currentQuestion === numberOfTasks - 1) {
         const service = new QuizService();
-        service.postResult('gabigabi', this.state.score, numberOfTasks, title);
+        service.postResult('nick', this.state.score, numberOfTasks, title);
         navigation.navigate('Test', {
           id: id,
           title: title,
@@ -61,8 +62,17 @@ class TestScreen extends Component {
       }
     };
 
-    const checkAnswer = (number) => {
-      if (tasks[currentQuestion].answers[number].isCorrect === true) {
+    // const checkAnswer = (number) => {
+    //   if (tasks[currentQuestion].answers[number].isCorrect === true) {
+    //     this.setState({
+    //       score: this.state.score + 1,
+    //     });
+    //   }
+    //   changeQuestion(id);
+    // };
+
+    const checkAnswer = (answer) => {
+      if (answer.isCorrect === true) {
         this.setState({
           score: this.state.score + 1,
         });
@@ -112,15 +122,17 @@ class TestScreen extends Component {
                   </ScrollView>
                 </View>
                 <View style={styles.answerBox}>
-                  {tasks[currentQuestion].answers.map((element, index) => {
-                    return (
-                      <Button
-                        title={element.content}
-                        key={index}
-                        handleOnPress={checkAnswer.bind(this, index)}
-                      />
-                    );
-                  })}
+                  {_.shuffle(tasks[currentQuestion].answers).map(
+                    (element, index) => {
+                      return (
+                        <Button
+                          title={element.content}
+                          key={index}
+                          handleOnPress={checkAnswer.bind(this, element)}
+                        />
+                      );
+                    },
+                  )}
                 </View>
               </View>
             </>

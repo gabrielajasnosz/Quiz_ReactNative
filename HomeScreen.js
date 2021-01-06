@@ -13,55 +13,51 @@ import App from './App';
 import Headline from './Headline';
 import QuizService from './QuizService';
 import Button from './Button';
-
+const _ = require('lodash');
 class HomeScreen extends Component {
   constructor() {
     super();
-    this.state = {
-      testsData: [],
-    };
-
+    // this.state = {
+    //   // testsData: [],
+    // };
   }
-
-
 
   async componentDidMount() {
-    const quiz=new QuizService();
-    this.setState({
-      testsData: await quiz.getTests(),
-    })
+    const quiz = new QuizService();
+    this.props.navigation.navigate('Home', {
+      tests: await quiz.getTests(),
+    });
   }
 
-  getResults=async (navigation) => {
+  getResults = async (navigation) => {
     const quiz = new QuizService();
 
     navigation.navigate('Result', {
       result: await quiz.getResult(),
     });
-  }
+  };
 
-  async handleOnPress(navigation,item){
-    const quiz=new QuizService();
-    const myDetails= await quiz.getDetailsTests(item.id);
+  async handleOnPress(navigation, item) {
+    const quiz = new QuizService();
+    const myDetails = await quiz.getDetailsTests(item.id);
     navigation.navigate('Test', {
       id: item.id,
       title: item.name,
-      description:item.description,
-      tags:item.tags,
-      level:item.level,
+      description: item.description,
+      tags: item.tags,
+      level: item.level,
       numberOfTasks: item.numberOfTasks,
       currentQuestion: 0,
-      score:0,
-      tasks: myDetails.tasks,
+      score: 0,
+      tasks: _.shuffle(myDetails.tasks),
       end: false,
-
     });
     console.log(myDetails.tasks[0].question);
   }
 
   render() {
-    const {navigation} = this.props;
-
+    const {navigation, route} = this.props;
+    const {tests} = route.params;
 
     return (
       <View style={styles.container}>
@@ -69,19 +65,17 @@ class HomeScreen extends Component {
         <View style={{flex: 10, backgroundColor: 'white'}}>
           <SafeAreaView>
             <FlatList
-              data={this.state.testsData}
+              data={tests}
               renderItem={({item}) => (
                 <TouchableOpacity
                   style={styles.item}
                   onPress={() => {
-                    this.handleOnPress(navigation,item)
+                    this.handleOnPress(navigation, item);
                   }}>
                   <Text style={styles.title}>{item.name}</Text>
                   <View style={styles.tags}>
-                    {item.tags.map((element,index) => {
-                      return (
-                          <Text style={styles.tag}>{item.tags[index]}</Text>
-                      );
+                    {item.tags.map((element, index) => {
+                      return <Text style={styles.tag}>{item.tags[index]}</Text>;
                     })}
                   </View>
                   <View>
@@ -97,9 +91,7 @@ class HomeScreen extends Component {
           <TouchableOpacity
             style={[styles.checkStyle]}
             onPress={() => this.getResults(navigation)}>
-            <Text style={styles.checkTextStyle}>
-              Check!
-            </Text>
+            <Text style={styles.checkTextStyle}>Check!</Text>
           </TouchableOpacity>
         </View>
       </View>

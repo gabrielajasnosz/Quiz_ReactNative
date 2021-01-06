@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import QuizService from './QuizService';
 const STORAGE_KEY = '@save_rule_status';
 
 class RegulationsScreen extends Component {
@@ -55,8 +56,11 @@ class RegulationsScreen extends Component {
 
   render() {
     const {navigation} = this.props;
+    const quiz = new QuizService();
     if (this.state.regulations === 'true') {
-      navigation.navigate('Home');
+      navigation.navigate('Home', {
+        tests: quiz.getTests(),
+      });
       return <View style={styles.container} />;
     } else {
       return (

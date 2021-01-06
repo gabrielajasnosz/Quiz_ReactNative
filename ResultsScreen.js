@@ -3,6 +3,7 @@ import QuizService from './QuizService';
 import {
   ScrollView,
   StyleSheet,
+  ToastAndroid,
   View,
   FlatList,
   RefreshControl,
@@ -11,49 +12,56 @@ import Headline from './Headline';
 import ResultRow from './ResultRow';
 
 class ResultsScreen extends Component {
-  constructor() {
-    const quiz = new QuizService();
-    super();
-    this.state = {
-      refreshing: false,
-    };
-
-  }
-
-
   wait = (timeout) => {
     return new Promise((resolve) => {
       setTimeout(resolve, timeout);
     });
   };
-
-  // handleOnRefresh = () => {
-  //   const quiz = new QuizService();
-  //   this.setState(
-  //       {
-  //         refreshing: true,
-  //       },
-  //       this.getResults(this.props.navigation),
-  //       () => {
-  //         this.wait(200).then(() =>this.setState({
-  //               refreshing: false,
-  //               //display: this.state.result.reverse(),
-  //             }
-  //         ));
-  //       },
-  //   );
-  // };
-
-  handleOnRefresh = () => {
-    this.setState({
-      refreshing: true
-    }, () => {
-      this.getResults(this.props.navigation)
-      this.setState({ refreshing: false})
-    })
+  constructor() {
+    super();
+    this.state = {
+      refreshing: false,
+      //result: this.props.route.params.result,
+    };
   }
 
-  async getResults(navigation){
+  _refreshControl() {
+    return (
+      <RefreshControl
+        refreshing={this.state.refreshing}
+        onRefresh={() => this._refreshFlatList()}
+      />
+    );
+  }
+
+  async componentDidMount() {
+    const quiz = new QuizService();
+    this.props.navigation.navigate('Result', {
+      result: await quiz.getResult(),
+    });
+  }
+
+  _refreshFlatList() {
+    const quiz = new QuizService();
+    this.setState(
+      {
+        refreshing: true,
+      },
+      () => {
+        this.wait(200).then(
+          () => this.getResults(this.props.navigation),
+          this.setState({
+            refreshing: false,
+            // result: quiz.getResult(),
+          }),
+        );
+
+        ToastAndroid.show('Data refreshed', ToastAndroid.SHORT);
+      },
+    );
+  }
+
+  async getResults(navigation) {
     const quiz = new QuizService();
 
     navigation.navigate('Result', {
@@ -61,38 +69,30 @@ class ResultsScreen extends Component {
     });
   }
   render() {
-    const {navigation,route} = this.props;
+    const {navigation, route} = this.props;
     const {result} = route.params;
 
     return (
       <View style={{flex: 1}}>
         <Headline navigation={navigation} title={'Results'} />
         <View style={{flex: 12, padding: 10, backgroundColor: 'white'}}>
-          <ScrollView>
+          <ScrollView refreshControl={this._refreshControl()}>
             <ResultRow
               nick="Login"
               score="Score"
               type="Type"
               createdOn="Date"
             />
-            {/* eslint-disable-next-line react/jsx-no-undef */}
             <FlatList
-              //keyExtractor={(item) => item.key}
-              data={result.reverse()}
+              data={result}
               renderItem={({item}) => (
                 <ResultRow
                   nick={item.nick}
-                  score={item.score+'/'+ item.total}
+                  score={item.score + '/' + item.total}
                   type={item.type}
                   createdOn={item.createdOn}
                 />
               )}
-              refreshControl={
-                <RefreshControl
-                  refreshing={this.state.refreshing}
-                  onRefresh={this.handleOnRefresh}
-                />
-              }
             />
           </ScrollView>
         </View>
