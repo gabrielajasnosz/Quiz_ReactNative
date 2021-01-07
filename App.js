@@ -8,7 +8,7 @@ import {
   Image,
   FlatList,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import SplashScreen from 'react-native-splash-screen';
 
 import RegulationsScreen from './RegulationsScreen';
@@ -24,60 +24,6 @@ import TestScreen from './TestScreen';
 import ResultsScreen from './ResultsScreen';
 import QuizService from './QuizService';
 const STORAGE_KEY = '@save_rule_status';
-
-//
-// function CustomDrawerContent({navigation}) {
-//   return (
-//     <DrawerContentScrollView style={{backgroundColor: 'lightgrey'}}>
-//       <Text style={styles.Oswald}>Quiz App</Text>
-//       <Image
-//         source={require('./logo.png')}
-//         style={{height: 150, width: 140, alignSelf: 'center'}}
-//       />
-//       <View
-//         style={{paddingBottom: 10, borderColor: 'black', borderBottomWidth: 1}}>
-//         <TouchableOpacity
-//           style={styles.drawerButtons}
-//           onPress={() => {
-//             navigation.navigate('Home');
-//           }}>
-//           <Text style={styles.OpenSans}>Home</Text>
-//         </TouchableOpacity>
-//         <TouchableOpacity
-//           style={styles.drawerButtons}
-//           onPress={() => {
-//             navigation.navigate('Result');
-//           }}>
-//           <Text style={styles.OpenSans}>Result</Text>
-//         </TouchableOpacity>
-//       </View>
-//       <View>
-//         <FlatList
-//           //keyExtractor={(item) => item.id}
-//           data={this.state.testsData}
-//           renderItem={({item}) => (
-//             <TouchableOpacity
-//               style={styles.drawerButtons}
-//               onPress={() => {
-//                 navigation.navigate('Test', {
-//                   id: item.id,
-//                   title: item.name,
-//                   description:item.description,
-//                   tags:item.tags,
-//                   level:item.level,
-//                   numberOfTasks: item.numberOfTasks,
-//                   question: 0,
-//                   end: false,
-//                 });
-//               }}>
-//               <Text style={styles.OpenSans} >{item.name}</Text>
-//             </TouchableOpacity>
-//           )}
-//         />
-//       </View>
-//     </DrawerContentScrollView>
-//   );
-// }
 
 const Drawer = createDrawerNavigator();
 

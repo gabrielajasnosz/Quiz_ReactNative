@@ -1,56 +1,120 @@
 import React, {Component} from 'react';
 import SQLite from 'react-native-sqlite-storage';
 import NetInfo from '@react-native-community/netinfo';
-
-let db;
+const _ = require('lodash');
+//let db;
 class QuizService extends Component {
   baseURL = 'http://tgryl.pl/quiz';
 
   constructor() {
     super();
-    let db = SQLite.openDatabase({
-      name: 'tests',
-      createFromLocation: '~tests.db',
-      location: 'Library',
-    });
+    // let db = SQLite.openDatabase({
+    //   name: 'quiz.db',
+    //   createFromLocation: 1,
+    // });
+
+    this.state = {
+      tags: [],
+      tests: [],
+      answers: [],
+      questions: [],
+    };
   }
 
-  executeQuery = (sqlQuery, params = []) =>
-    new Promise((resolve, reject) => {
-      db.transaction((tx) => {
-        tx.executeSql(
-          sqlQuery,
-          params,
-          (tx, results) => {
-            console.log(results.rows.item(0));
-            resolve(results);
-          },
-          (error) => {
-            console.log(error);
-            reject(error);
-          },
-        );
+  getTestsWithInternetChecking = async () => {
+    let tests = [];
+    if (
+      await NetInfo.fetch().then((state) => {
+        return state.isConnected;
+      })
+    ) {
+      tests = await this.getTests();
+    } else {
+      const query1 = 'SELECT * FROM tags;';
+      let table1 = [];
+
+      this.props.db.transaction((tx) => {
+        tx.executeSql(query1, [], (tx, results) => {
+          let len = results.rows.length;
+          if (len > 0) {
+            for (let i = 0; i < results.rows.length; i++) {
+              table1.push(results.rows.item(i));
+            }
+            this.setState({tags: table1});
+          }
+        });
       });
-    });
 
-  // getTestsWithInternetCheck = async () => {
-  //   let tests = [];
-  //   if (
-  //     await NetInfo.fetch().then((state) => {
-  //       return state.isConnected;
+      const query2 = 'SELECT * FROM tests;';
+      let table = [];
+      this.props.db.transaction((tx) => {
+        tx.executeSql(query2, [], (tx, results) => {
+          let len = results.rows.length;
+          if (len > 0) {
+            for (let i = 0; i < results.rows.length; i++) {
+              table.push(results.rows.item(i));
+              let idtag = table[i].id;
+              table[i].tags = [];
+              this.state.tags.forEach((item, z) => {
+                if (item.test_id === idtag) {
+                  table[i].tags.push(item.tag);
+                }
+              });
+            }
+          }
+        });
+      });
+
+      tests = _.shuffle(table);
+    }
+    return tests;
+  };
+
+  //
+  //
+  // async getAllTags(db){
+  //   const query = 'SELECT * FROM tags;';
+  //   let table = [];
+  //   db.transaction(tx=>{
+  //     tx.executeSql(query,[],(tx,results)=>{
+  //       let len = results.rows.length;
+  //       if(len > 0){
+  //         for(let i = 0; i< results.rows.length; i++){
+  //           table.push(results.rows.item(i));
+  //         }
+  //         this.setState({ tags: table });
+  //         this.getAllTests(db);
+  //       }
   //     })
-  //   ) {
-  //     tests = await this.getTests();
-  //   } else {
-  //     const testQuery = await this.executeQuery('SELECT * FROM tests', []);
-  //     for (let i = 0; i < testQuery.rows.length; i++) {
-  //       tests.push(await testQuery.rows.item(i));
-  //     }
-  //   }
-  //   return shuffle(tests);
-  // };
-
-  // getDetailsTestsWithInternetCheck = async (id) => {
+  //   })
+  // }
+  // async getAllTests(db){
+  //   let tags = this.state.tags
+  //   const query = 'SELECT * FROM tests;';
+  //   let table = [];
+  //   db.transaction(tx=>{
+  //     tx.executeSql(query,[],(tx,results)=>{
+  //       let len = results.rows.length;
+  //       if(len > 0){
+  //         for(let i = 0; i< results.rows.length; i++){
+  //           table.push(results.rows.item(i));
+  //           let idtag = table[i].id;
+  //           table[i].tags = [];
+  //           tags.forEach((item, z) => {
+  //             if(item.id_tag === idtag){
+  //               table[i].tags.push(item.tag)
+  //             }
+  //           });
+  //         }
+  //
+  //         this.setState({ tests: _.shuffle(table) });
+  //         this.loadAllTestsDetails(db);
+  //       }
+  //     })
+  //   })
+  // }
+  //
+  // getDetailsTestsWithInternetChecking = async (id) => {
   //   let detailsTests = null;
   //   if (
   //     await NetInfo.fetch().then((state) => {
@@ -67,6 +131,15 @@ class QuizService extends Component {
   //   }
   //   return detailsTests;
   // };
+
+  getAllDetailsTests = async () => {
+    const tests = await this.getTests();
+    const DetailsTestsArray = [];
+    for (let i = 0; i < tests.length; i++) {
+      DetailsTestsArray.push(await this.getDetailsTests(tests[i].id));
+    }
+    return DetailsTestsArray;
+  };
 
   getResult = async () => {
     return await fetch(this.baseURL + '/results?last=10')

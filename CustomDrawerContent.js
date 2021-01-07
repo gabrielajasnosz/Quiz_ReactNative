@@ -31,13 +31,12 @@ class CustomDrawerContent extends Component {
     });
   }
 
-  getResults = async (navigation) => {
+  async getResults(navigation) {
     const quiz = new QuizService();
-
-    navigation.navigate('Result', {
+    this.props.navigation.navigate('Result', {
       result: await quiz.getResult(),
     });
-  };
+  }
 
   refreshTests = async () => {
     const quiz = new QuizService();

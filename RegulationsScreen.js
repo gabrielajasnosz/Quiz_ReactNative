@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import QuizService from './QuizService';
-const STORAGE_KEY = '@save_rule_status';
+//const STORAGE_KEY = '@save_rule_status';
 
 class RegulationsScreen extends Component {
   constructor() {
@@ -29,7 +29,7 @@ class RegulationsScreen extends Component {
       this.setState({
         regulations: 'true',
       });
-      await AsyncStorage.setItem(STORAGE_KEY, 'true');
+      await AsyncStorage.setItem('STORAGE_KEY', 'true');
     } catch (err) {
       console.log(err);
     }
@@ -37,7 +37,7 @@ class RegulationsScreen extends Component {
 
   getData = async () => {
     try {
-      const value = await AsyncStorage.getItem(STORAGE_KEY);
+      const value = await AsyncStorage.getItem('STORAGE_KEY');
       if (value !== null) {
         if (value == 'true') {
           this.setState({
@@ -54,13 +54,17 @@ class RegulationsScreen extends Component {
     }
   };
 
+  async navigateHome() {
+    const quiz = new QuizService();
+    this.props.navigation.navigate('Home', {
+      tests: await quiz.getTests(),
+    });
+  }
+
   render() {
     const {navigation} = this.props;
-    const quiz = new QuizService();
     if (this.state.regulations === 'true') {
-      navigation.navigate('Home', {
-        tests: quiz.getTests(),
-      });
+      this.navigateHome();
       return <View style={styles.container} />;
     } else {
       return (
@@ -74,7 +78,7 @@ class RegulationsScreen extends Component {
             style={styles.buttonStyle}
             onPress={() => {
               this.onAccept();
-              navigation.navigate('Home');
+              this.navigateHome();
             }}>
             <Text>ACCEPT</Text>
           </TouchableOpacity>
