@@ -28,18 +28,25 @@ const STORAGE_KEY = '@save_rule_status';
 const Drawer = createDrawerNavigator();
 
 class App extends Component {
-  // async componentDidMount() {
-  //   const quiz = new QuizService();
-  //   this.setState({
-  //     testsData: await quiz.getTests(),
-  //   });
+  // constructor() {
+  //   super();
   //
+  //   this.state = {
+  //     DBresult: [],
+  //     details: [],
+  //     isConnected: false,
+  //     tests: [],
+  //   };
   // }
 
   async componentDidMount() {
     // const quiz = new QuizService();
     // this.props.navigation.navigate('Home', {
     //   tests: await quiz.getTests(),
+    // });
+    // const quiz = new QuizService();
+    // this.setState({
+    //   tests: await quiz.getTestsWithInternetChecking(),
     // });
     SplashScreen.hide();
   }

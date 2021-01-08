@@ -56,9 +56,11 @@ class RegulationsScreen extends Component {
 
   async navigateHome() {
     const quiz = new QuizService();
-    this.props.navigation.navigate('Home', {
-      tests: await quiz.getTests(),
-    });
+    // this.props.navigation.navigate('Home', {
+    //   tests: await quiz.getTests(),
+    // });
+
+    this.props.navigation.navigate('Home');
   }
 
   render() {
