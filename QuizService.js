@@ -99,13 +99,13 @@ class QuizService extends Component {
             table[i].tags = [];
             tags.forEach((item, z) => {
               if (item.test_id === idtag) {
-                console.log(item.test_id);
+                //console.log(item.test_id);
                 table[i].tags.push(item.tag);
               }
             });
-            tests = table;
           }
-          console.log(tests);
+          tests = table;
+          //console.log(tests);
         }
       });
     });

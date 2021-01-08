@@ -20,7 +20,6 @@ import Button from './Button';
 
 const _ = require('lodash');
 
-let db;
 class HomeScreen extends Component {
   NetInfoSubscribtion = null;
 
@@ -35,10 +34,11 @@ class HomeScreen extends Component {
     };
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     const quiz = new QuizService();
     this.setState({
-      tests: await quiz.getTestsWithInternetChecking(),
+      tests: quiz.getTestsFromDatabase(),
+      DBresult: [],
     });
   }
 
@@ -70,16 +70,18 @@ class HomeScreen extends Component {
 
   render() {
     const {navigation, route} = this.props;
+    const quiz = new QuizService();
+    console.log(this.state.tests);
     // const {tests} = route.params;
-    console.log(this.state.DBresult);
-    console.log(this.state.details);
+    // console.log(this.state.DBresult);
+    // console.log(this.state.details);
     return (
       <View style={styles.container}>
         <Headline navigation={navigation} title={'Home'} />
         <View style={{flex: 10, backgroundColor: 'white'}}>
           <SafeAreaView>
             <FlatList
-              data={_.shuffle(this.state.tests)}
+              data={_.shuffle(quiz.getTestsFromDatabase())}
               renderItem={({item}) => (
                 <TouchableOpacity
                   style={styles.item}
