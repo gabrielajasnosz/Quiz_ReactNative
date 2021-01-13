@@ -1,17 +1,7 @@
 import React, {Component} from 'react';
-import {
-  FlatList,
-  Image,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  ScrollView,
-  View,
-  TouchableOpacity,
-} from 'react-native';
+import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import QuizService from './QuizService';
-//const STORAGE_KEY = '@save_rule_status';
 
 class RegulationsScreen extends Component {
   constructor() {
@@ -56,11 +46,9 @@ class RegulationsScreen extends Component {
 
   async navigateHome() {
     const quiz = new QuizService();
-    // this.props.navigation.navigate('Home', {
-    //   tests: await quiz.getTests(),
-    // });
-
-    this.props.navigation.navigate('Home');
+    this.props.navigation.navigate('Home', {
+      testsData: await quiz.getTestsWithInternetCheck(),
+    });
   }
 
   render() {

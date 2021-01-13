@@ -10,8 +10,11 @@ import Headline from './Headline';
 
 import QuizService from './QuizService';
 import Button from './Button';
+import NetInfo from '@react-native-community/netinfo';
+import CountDown from 'react-native-countdown-component';
 
 const _ = require('lodash');
+
 class TestScreen extends Component {
   constructor() {
     super();
@@ -62,15 +65,6 @@ class TestScreen extends Component {
       }
     };
 
-    // const checkAnswer = (number) => {
-    //   if (tasks[currentQuestion].answers[number].isCorrect === true) {
-    //     this.setState({
-    //       score: this.state.score + 1,
-    //     });
-    //   }
-    //   changeQuestion(id);
-    // };
-
     const checkAnswer = (answer) => {
       if (answer.isCorrect === true) {
         this.setState({
@@ -81,10 +75,18 @@ class TestScreen extends Component {
     };
 
     const endGame = async () => {
-      const quiz = new QuizService();
-      navigation.navigate('Result', {
-        result: await quiz.getResult(),
-      });
+      if (
+        await NetInfo.fetch().then((state) => {
+          return state.isConnected;
+        })
+      ) {
+        const quiz = new QuizService();
+        navigation.navigate('Result', {
+          result: await quiz.getResult(),
+        });
+      } else {
+        alert("You don't have internet connection");
+      }
       this.setState({
         score: 0,
       });
@@ -107,11 +109,22 @@ class TestScreen extends Component {
                 <Text style={styles.questionText2}>
                   Question {currentQuestion + 1} of {numberOfTasks}
                 </Text>
-                <View style={{flexDirection: 'row'}}>
-                  <Text style={styles.questionText2}>
-                    Time: {tasks[currentQuestion].duration}
-                  </Text>
-                </View>
+                <Text style={styles.questionText2}>Duration:</Text>
+                <CountDown
+                  id={currentQuestion}
+                  until={tasks[currentQuestion].duration}
+                  size={18}
+                  onFinish={() => {
+                    changeQuestion(id);
+                  }}
+                  digitStyle={{
+                    modalVisible: false,
+                  }}
+                  digitTxtStyle={{color: '#000', fontFamily: 'OpenSans'}}
+                  timeToShow={['S']}
+                  timeLabels={{s: ''}}
+                  running={true}
+                />
               </View>
               <View style={{flex: 10, padding: 10}}>
                 <View style={styles.questionBox}>

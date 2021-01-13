@@ -14,6 +14,7 @@ import App from './App';
 import Headline from './Headline';
 import QuizService from './QuizService';
 import {DrawerContentScrollView} from '@react-navigation/drawer';
+import NetInfo from '@react-native-community/netinfo';
 
 const _ = require('lodash');
 class CustomDrawerContent extends Component {
@@ -27,45 +28,82 @@ class CustomDrawerContent extends Component {
   async componentDidMount() {
     const quiz = new QuizService();
     this.setState({
-      testsData: await quiz.getTests(),
+      testsData: await quiz.getTestsWithInternetCheck(),
     });
   }
 
   async getResults(navigation) {
-    const quiz = new QuizService();
-    this.props.navigation.navigate('Result', {
-      result: await quiz.getResult(),
-    });
+    if (
+      await NetInfo.fetch().then((state) => {
+        return state.isConnected;
+      })
+    ) {
+      const quiz = new QuizService();
+      this.props.navigation.navigate('Result', {
+        result: await quiz.getResult(),
+      });
+    } else {
+      alert("You don't have internet connection");
+    }
   }
 
   refreshTests = async () => {
-    const quiz = new QuizService();
-    this.setState({
-      testsData: await quiz.getTests(),
-    });
-    ToastAndroid.show('Data refreshed!', ToastAndroid.SHORT);
-    this.props.navigation.navigate('Home', {
-      tests: await quiz.getTests(),
-    });
+    if (
+      await NetInfo.fetch().then((state) => {
+        return state.isConnected;
+      })
+    ) {
+      const quiz = new QuizService();
+      this.setState({
+        testsData: await quiz.getTests(),
+      });
+      ToastAndroid.show('Data refreshed!', ToastAndroid.SHORT);
+      this.props.navigation.navigate('Home', {
+        tests: await quiz.getTests(),
+      });
+    } else {
+      alert("You don't have internet connection!");
+    }
   };
 
   async handleOnPress(navigation, item) {
     const quiz = new QuizService();
-    const myDetails = await quiz.getDetailsTests(item.id);
-    navigation.navigate('Test', {
-      id: item.id,
-      title: item.name,
-      description: item.description,
-      tags: item.tags,
-      level: item.level,
-      numberOfTasks: item.numberOfTasks,
-      currentQuestion: 0,
-      score: 0,
-      tasks: _.shuffle(myDetails.tasks),
-      //tasks: myDetails.tasks,
-      end: false,
+    const myDetails = await quiz.getDetailsTestsWithInternetCheck(item.id);
+    await NetInfo.fetch().then((state) => {
+      return state.isConnected;
     });
-    console.log(myDetails.tasks[0].question);
+
+    if (
+      await NetInfo.fetch().then((state) => {
+        return state.isConnected;
+      })
+    ) {
+      navigation.navigate('Test', {
+        id: item.id,
+        title: item.name,
+        description: item.description,
+        tags: item.tags,
+        level: item.level,
+        numberOfTasks: item.numberOfTasks,
+        currentQuestion: 0,
+        score: 0,
+        tasks: _.shuffle(myDetails.tasks),
+        end: false,
+      });
+    } else {
+      navigation.navigate('Test', {
+        id: item.id,
+        title: item.name,
+        description: item.description,
+        tags: item.tags,
+        level: item.level,
+        numberOfTasks: item.numberOfTasks,
+        currentQuestion: 0,
+        score: 0,
+        tasks: _.shuffle(JSON.parse(myDetails.tasks)),
+        end: false,
+      });
+    }
   }
 
   render() {
@@ -122,7 +160,7 @@ class CustomDrawerContent extends Component {
         <View>
           <FlatList
             //keyExtractor={(item) => item.id}
-            data={_.shuffle(this.state.testsData)}
+            data={this.state.testsData}
             renderItem={({item}) => (
               <TouchableOpacity
                 style={styles.drawerButtons}

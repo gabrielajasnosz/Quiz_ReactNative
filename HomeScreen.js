@@ -13,75 +13,209 @@ import App from './App';
 import Headline from './Headline';
 import QuizService from './QuizService';
 import Button from './Button';
-// import SQLite from 'react-native-sqlite-storage';
-// import NetInfo from '@react-native-community/netinfo';
+import SQLite from 'react-native-sqlite-storage';
+import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-
+let db;
 const _ = require('lodash');
 
 class HomeScreen extends Component {
+  service = new QuizService();
   NetInfoSubscribtion = null;
 
   constructor() {
     super();
-
     this.state = {
-      DBresult: [],
-      details: [],
+      isLoading: true,
       isConnected: false,
-      tests: [],
+      testDetailsAll: null,
     };
-  }
-
-  componentDidMount() {
-    const quiz = new QuizService();
-    this.setState({
-      tests: quiz.getTestsFromDatabase(),
-      DBresult: [],
+    db = SQLite.openDatabase({
+      name: 'quiz.db',
+      createFromLocation: 1,
     });
   }
+
+  async componentDidMount() {
+    this.NetInfoSubscribtion = NetInfo.addEventListener(
+      this.handleConnectivityChange,
+    );
+    const service = new QuizService();
+    service.getAllDetailsTests();
+    this.setState({
+      isLoading: false,
+    });
+
+    const dateFromStorage = await AsyncStorage.getItem('Date');
+    if (
+      await NetInfo.fetch().then((state) => {
+        return state.isConnected;
+      })
+    ) {
+      if (
+        dateFromStorage ===
+        new Date().getDate().toString() +
+          '-' +
+          new Date().getMonth().toString() +
+          '-' +
+          new Date().getFullYear().toString()
+      ) {
+        console.log('Data already saved today.');
+      } else {
+        await AsyncStorage.setItem(
+          'Date',
+          new Date().getDate().toString() +
+            '-' +
+            new Date().getMonth().toString() +
+            '-' +
+            new Date().getFullYear().toString(),
+        );
+        this.savetoDataBase();
+        console.log('Data succesfully saved.');
+      }
+    } else {
+    }
+  }
+
+  componentWillUnmount() {
+    this.NetInfoSubscribtion && this.NetInfoSubscribtion();
+  }
+
+  handleConnectivityChange = (state) => {
+    this.setState({isConnected: state.isConnected});
+  };
+  savetoDataBase = async () => {
+    const service = new QuizService();
+    const testsDetails = await service.getAllDetailsTests();
+
+    this.executeQuery('DROP TABLE IF EXISTS tests', []);
+    this.executeQuery(
+      'CREATE TABLE IF NOT EXISTS tests (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, description TEXT NOT NULL, tags TEXT NOT NULL, level TEXT NOT NULL, numberOfTasks INTEGER NOT NULL);',
+      [],
+    );
+
+    this.props.route.params?.testsData.map((test) => {
+      this.executeQuery(
+        'INSERT INTO tests (id, name, description, tags, level, numberOfTasks) VALUES (?,?,?,?,?,?);',
+        [
+          test.id,
+          test.name,
+          test.description,
+          test.tags.toString(),
+          test.level,
+          test.numberOfTasks,
+        ],
+      );
+    });
+
+    this.executeQuery('DROP TABLE IF EXISTS testsDetails', []);
+    this.executeQuery(
+      'CREATE TABLE IF NOT EXISTS testsDetails (tags TEXT NOT NULL, tasks TEXT NOT NULL, name TEXT NOT NULL, description TEXT NOT NULL, level TEXT NOT NULL, id TEXT NOT NULL);',
+      [],
+    );
+    testsDetails.map(async (test) => {
+      this.executeQuery(
+        'INSERT INTO testsDetails (tags, tasks, name, description, level, id) VALUES (?,?,?,?,?,?);',
+        [
+          test.tags.toString(),
+          JSON.stringify(test.tasks),
+          test.name,
+          test.description,
+          test.level,
+          test.id,
+        ],
+      );
+    });
+  };
+
+  executeQuery = (sqlQuery, params = []) =>
+    new Promise((resolve, reject) => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          sqlQuery,
+          params,
+          (tx, results) => {
+            resolve(results);
+          },
+          (error) => {
+            console.log(error);
+            reject(error);
+          },
+        );
+      });
+    });
+
+  failToOpenDB = (err) => {
+    console.log('fail' + err);
+  };
 
   getResults = async (navigation) => {
-    const quiz = new QuizService();
+    if (
+      await NetInfo.fetch().then((state) => {
+        return state.isConnected;
+      })
+    ) {
+      const quiz = new QuizService();
 
-    navigation.navigate('Result', {
-      result: await quiz.getResult(),
-    });
+      navigation.navigate('Result', {
+        result: await quiz.getResult(),
+      });
+    } else {
+      alert("You don't have internet connection!");
+    }
   };
 
   async handleOnPress(navigation, item) {
     const quiz = new QuizService();
-    const myDetails = await quiz.getDetailsTests(item.id);
-    navigation.navigate('Test', {
-      id: item.id,
-      title: item.name,
-      description: item.description,
-      tags: item.tags,
-      level: item.level,
-      numberOfTasks: item.numberOfTasks,
-      currentQuestion: 0,
-      score: 0,
-      tasks: _.shuffle(myDetails.tasks),
-      end: false,
+    const myDetails = await quiz.getDetailsTestsWithInternetCheck(item.id);
+    await NetInfo.fetch().then((state) => {
+      return state.isConnected;
     });
-    console.log(myDetails.tasks[0].question);
+
+    if (
+      await NetInfo.fetch().then((state) => {
+        return state.isConnected;
+      })
+    ) {
+      navigation.navigate('Test', {
+        id: item.id,
+        title: item.name,
+        description: item.description,
+        tags: item.tags,
+        level: item.level,
+        numberOfTasks: item.numberOfTasks,
+        currentQuestion: 0,
+        score: 0,
+        tasks: _.shuffle(myDetails.tasks),
+        end: false,
+      });
+    } else {
+      navigation.navigate('Test', {
+        id: item.id,
+        title: item.name,
+        description: item.description,
+        tags: item.tags,
+        level: item.level,
+        numberOfTasks: item.numberOfTasks,
+        currentQuestion: 0,
+        score: 0,
+        tasks: _.shuffle(JSON.parse(myDetails.tasks)),
+        end: false,
+      });
+    }
   }
 
   render() {
     const {navigation, route} = this.props;
-    const quiz = new QuizService();
-    console.log(this.state.tests);
-    // const {tests} = route.params;
-    // console.log(this.state.DBresult);
-    // console.log(this.state.details);
+    const {testsData} = route.params;
     return (
       <View style={styles.container}>
         <Headline navigation={navigation} title={'Home'} />
         <View style={{flex: 10, backgroundColor: 'white'}}>
           <SafeAreaView>
             <FlatList
-              data={_.shuffle(quiz.getTestsFromDatabase())}
+              data={testsData}
               renderItem={({item}) => (
                 <TouchableOpacity
                   style={styles.item}
@@ -90,9 +224,7 @@ class HomeScreen extends Component {
                   }}>
                   <Text style={styles.title}>{item.name}</Text>
                   <View style={styles.tags}>
-                    {item.tags.map((element, index) => {
-                      return <Text style={styles.tag}>{item.tags[index]}</Text>;
-                    })}
+                    <Text style={styles.tag}>{item.tags}</Text>
                   </View>
                   <View>
                     <Text style={styles.description}>{item.description}</Text>
